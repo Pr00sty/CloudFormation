@@ -5,9 +5,16 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       CidrBlock: 10.0.0.0/16
+      Tags:
+        - Key: "Name"
+          Value: "Main_VPC"
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "Main_IG"
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -19,6 +26,9 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
+      Tags:
+        - Key: "Name"
+          Value: "Public_RT"
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -33,6 +43,9 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.0.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Public_subnet_1"
 
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -53,6 +66,9 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       CidrBlock: 10.0.11.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Private_subnet_1"
 
 Outputs:
   VPC:
