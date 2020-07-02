@@ -13,6 +13,11 @@ It contains network configuration like:
 aws cloudformation create-stack --stack-name network --template-body file://network.yaml
 ```
 
+For create or update stack in IAM parameter `--capabilities` is mandatory
+```
+aws cloudformation create-stack --stack-name iamPacker --template-body file://iam_packer.yaml --capabilities CAPABILITY_NAMED_IAM
+```
+
 ## Follow stack events
 ```
 aws cloudformation describe-stack-events --stack-name <stack_name>
