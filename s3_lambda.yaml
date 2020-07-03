@@ -1,0 +1,22 @@
+Resources:
+  LambdaS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: pr00sty-lambda
+
+  LambdaS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LambdaS3Bucket
+      PolicyDocument:
+        Statement:
+          Action:
+            - "s3:GetObject"
+          Effect: "Deny"
+          Resource:
+            Fn::Join:
+              - ''
+              - - "arn:aws:s3:::"
+                - Ref: "LambdaS3Bucket"
+                - "/*"
+          Principal: "*"
