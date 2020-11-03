@@ -96,7 +96,7 @@ Resources:
     Type: AWS::EC2::NatGateway
     Properties:
       AllocationId: !GetAtt NatGateway3EIP.AllocationId
-      SubnetId: !Ref PublicSubnet2
+      SubnetId: !Ref PublicSubnet3
 
   PrivateRouteTable1:
       Type: AWS::EC2::RouteTable
