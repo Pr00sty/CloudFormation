@@ -55,6 +55,7 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
+#Public subnets
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -79,6 +80,157 @@ Resources:
         - VPC
         - DefaultNetworkAcl
 
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1b"
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Public_subnet_2"
+
+  PublicSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetNetworkAclAssociation2:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      NetworkAclId: !GetAtt
+        - VPC
+        - DefaultNetworkAcl
+
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1c"
+      CidrBlock: 10.0.3.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Public_subnet_3"
+
+  PublicSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnetNetworkAclAssociation3:
+    Type: AWS::EC2::SubnetNetworkAclAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet3
+      NetworkAclId: !GetAtt
+        - VPC
+        - DefaultNetworkAcl
+
+# Private subnets
+  PrivateSubnet1:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1a"
+      CidrBlock: 10.0.11.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Private_subnet_1"
+
+  PrivateRouteTable1:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: "Name"
+            Value: "Private_RT_1"
+
+  PrivateRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: VPC
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway1
+            
+  PrivateSubnetRouteTableAssociation1:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+
+  PrivateSubnet2:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1b"
+      CidrBlock: 10.0.22.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Private_subnet_2"
+
+  PrivateRouteTable2:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: "Name"
+            Value: "Private_RT_2"
+      
+  PrivateRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: VPC
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway2
+  
+  PrivateSubnetRouteTableAssociation2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+      
+      
+  PrivateSubnet3:
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "eu-west-1c"
+      CidrBlock: 10.0.33.0/24
+      Tags:
+        - Key: "Name"
+          Value: "Private_subnet_3"
+          
+  PrivateRouteTable3:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId: !Ref VPC
+        Tags:
+          - Key: "Name"
+            Value: "Private_RT_3"
+
+  PrivateRoute3:
+    Type: AWS::EC2::Route
+    DependsOn: VPC
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable3
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway3
+  
+  PrivateSubnetRouteTableAssociation3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable3
+
+
+# NAT GWs
   NatGateway1EIP:
     Type: AWS::EC2::EIP
     DependsOn: VPCGatewayAttachment
@@ -115,133 +267,6 @@ Resources:
       AllocationId: !GetAtt NatGateway3EIP.AllocationId
       SubnetId: !Ref PublicSubnet3
 
-  PrivateRouteTable1:
-      Type: AWS::EC2::RouteTable
-      Properties:
-        VpcId: !Ref VPC
-        Tags:
-          - Key: "Name"
-            Value: "Private_RT_1"
-
-  PrivateRoute1:
-    Type: AWS::EC2::Route
-    DependsOn: VPC
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable1
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway1
-
-
-  PrivateRouteTable2:
-      Type: AWS::EC2::RouteTable
-      Properties:
-        VpcId: !Ref VPC
-        Tags:
-          - Key: "Name"
-            Value: "Private_RT_2"
-
-  PrivateRoute2:
-    Type: AWS::EC2::Route
-    DependsOn: VPC
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable2
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway2
-  
-  
-  PrivateRouteTable3:
-      Type: AWS::EC2::RouteTable
-      Properties:
-        VpcId: !Ref VPC
-        Tags:
-          - Key: "Name"
-            Value: "Private_RT_3"
-
-  PrivateRoute3:
-    Type: AWS::EC2::Route
-    DependsOn: VPC
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable3
-      DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway3
-
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1b"
-      CidrBlock: 10.0.2.0/24
-      Tags:
-        - Key: "Name"
-          Value: "Public_subnet_2"
-
-  PublicSubnetRouteTableAssociation2:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnetNetworkAclAssociation2:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet2
-      NetworkAclId: !GetAtt
-        - VPC
-        - DefaultNetworkAcl
-
-  PublicSubnet3:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1c"
-      CidrBlock: 10.0.3.0/24
-      Tags:
-        - Key: "Name"
-          Value: "Public_subnet_3"
-
-  PublicSubnetRouteTableAssociation3:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet3
-      RouteTableId: !Ref PublicRouteTable
-
-  PublicSubnetNetworkAclAssociation3:
-    Type: AWS::EC2::SubnetNetworkAclAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet3
-      NetworkAclId: !GetAtt
-        - VPC
-        - DefaultNetworkAcl
-
-  PrivateSubnet1:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1a"
-      CidrBlock: 10.0.11.0/24
-      Tags:
-        - Key: "Name"
-          Value: "Private_subnet_1"
-
-  PrivateSubnet2:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1b"
-      CidrBlock: 10.0.22.0/24
-      Tags:
-        - Key: "Name"
-          Value: "Private_subnet_2"
-
-  PrivateSubnet3:
-    Type: 'AWS::EC2::Subnet'
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: "eu-west-1c"
-      CidrBlock: 10.0.33.0/24
-      Tags:
-        - Key: "Name"
-          Value: "Private_subnet_3"
     
   MyLB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -253,6 +278,18 @@ Resources:
         - !Ref PublicSubnet1
         - !Ref PublicSubnet2
       Type: application 
+      SecurityGroups:
+        - !Ref SecurityGroup
+      
+  Listener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MyTargetGroup
+      LoadBalancerArn: !Ref MyLB
+      Port: 80
+      Protocol: HTTP
       
   MyTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -265,7 +302,7 @@ Resources:
       Port: 80
       HealthyThresholdCount: 2
       HealthCheckTimeoutSeconds: 5
-
+        
   myLaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties: 
@@ -282,6 +319,7 @@ Resources:
           CpuCredits: Unlimited
         ImageId: ami-017ac7458616b6cda
         InstanceType: t2.nano
+        # KeyName: my-key-pair-useast1
         Monitoring: 
           Enabled: true
         SecurityGroupIds: 
@@ -294,20 +332,21 @@ Resources:
       MinSize: "1"
       MaxSize: "2"
       DesiredCapacity: "2"
-      HealthCheckGracePeriod: 300
+      TargetGroupARNs:
+        - !Ref MyTargetGroup
+      HealthCheckGracePeriod: 30
       LaunchTemplate:
         LaunchTemplateId: !Ref myLaunchTemplate
         Version: !GetAtt myLaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
       MetricsCollection: 
         - Granularity: "1Minute"
           Metrics: 
             - "GroupMinSize"
             - "GroupMaxSize"
 
-      
 Outputs:
   VPC:
     Description: VPC ID
@@ -350,3 +389,9 @@ Outputs:
     Value: !Ref PrivateSubnet3
     Export:
       Name: !Sub '${AWS::StackName}-PrivSubnet3'
+      
+  MyLB:
+    Description: LB's URL
+    Value: !GetAtt MyLB.DNSName
+    Export:
+      Name: !Sub '${AWS::StackName}-LB'
