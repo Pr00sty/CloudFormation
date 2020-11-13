@@ -1,0 +1,205 @@
+Resources:
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: SNSTopic
+      TopicName: SNSTopic
+  SNSTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      PolicyDocument:
+        Id: Id1
+        Version: '2012-10-17'
+        Statement:
+          - Sid: Sid1
+            Effect: Allow
+            Principal:
+              Service:
+                - 's3.amazonaws.com'
+                - 'sqs.amazonaws.com'
+            Action: 'sns:Publish'
+            Resource:
+              Fn::GetAtt:
+                - ThumbnailQueueA
+                - Arn
+          - Sid: Sid2
+            Effect: Allow
+            Principal:
+              Service:
+                - 's3.amazonaws.com'
+                - 'sqs.amazonaws.com'
+            Action: 'sns:Publish'
+            Resource:
+              Fn::GetAtt:
+                - ThumbnailQueueB
+                - Arn
+      Topics:
+        - !Ref SNSTopic
+
+  InputBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: paw-test-image-input-bucket
+      AccessControl: 'Private'
+      PublicAccessBlockConfiguration:
+        RestrictPublicBuckets: TRUE
+      NotificationConfiguration:
+        TopicConfigurations:
+          - Event: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: to_process
+            Topic: !Ref SNSTopic
+
+  ThumbnailQueueA:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ThumbnailQueueA
+
+  SNSSubscriptionA:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt
+        - ThumbnailQueueA
+        - Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+      TopicArn: !Ref SNSTopic
+
+  ThumbnailQueueB:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ThumbnailQueueB
+
+  SNSSubscriptionB:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt
+        - ThumbnailQueueB
+        - Arn
+      Protocol: sqs
+      RawMessageDelivery: true
+      TopicArn: !Ref SNSTopic
+
+  SQSPolicy:
+    Type: AWS::SQS::QueuePolicy
+    DependsOn: ThumbnailFunctionA
+    Properties:
+      Queues:
+        - ThumbnailQueueA
+        - ThumbnailQueueB
+      PolicyDocument:
+        Id: SQSPolicyDocument
+        Version: '2012-10-17'
+        Statement:
+          - Sid: allow-sqs-messages-A
+            Effect: Allow
+            Principal:
+              Service:
+                - 'sns.amazonaws.com'
+                - 'lambda.amazonaws.com'
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+            Resource:
+              - !GetAtt ThumbnailFunctionA.Arn
+              - !Ref SNSTopic
+          - Sid: allow-sqs-messages-B
+            Effect: Allow
+            Principal:
+              Service:
+                - 'sns.amazonaws.com'
+                - 'lambda.amazonaws.com'
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+            Resource:
+              - !GetAtt ThumbnailFunctionA.Arn
+              - !Ref SNSTopic
+
+  IamPolicyLambdaFunction:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: ManagedPolicy for Lambda
+      ManagedPolicyName: thumbnail-lambda-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sqs:*
+            Resource: '*'
+  IamRoleLambdaFunction:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: IamPolicyLambdaFunction
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      RoleName: thumbnail-lambda-role
+
+  ThumbnailFunctionA:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: thumbnail_function_A
+      Handler: index.lambda_handler
+      Role:
+        Fn::GetAtt:
+          - IamRoleLambdaFunction
+          - Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+            print(event)
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 2
+  EventSourceMappingA:
+    DependsOn: ThumbnailFunctionA
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn:
+        Fn::GetAtt:
+          - ThumbnailQueueA
+          - Arn
+      FunctionName:
+        Ref: ThumbnailFunctionA
+
+  ThumbnailFunctionB:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: thumbnail_function_B
+      Handler: index.lambda_handler
+      Role:
+        Fn::GetAtt:
+          - IamRoleLambdaFunction
+          - Arn
+      Code:
+        ZipFile: |
+          def lambda_handler(event, context):
+            print(event)
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 2
+  EventSourceMappingB:
+    DependsOn: ThumbnailFunctionB
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 1
+      Enabled: true
+      EventSourceArn:
+        Fn::GetAtt:
+          - ThumbnailQueueB
+          - Arn
+      FunctionName:
+        Ref: ThumbnailFunctionB
