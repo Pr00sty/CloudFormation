@@ -1,0 +1,94 @@
+Resources:
+  CodeDeployPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for Lambda
+    Properties:
+      ManagedPolicyName: codedeploy-iam-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:*"
+            Resource: 'arn:aws:logs:*:*:*'
+          - Effect: Allow
+            Action:
+              - codepipeline:PutJobSuccessResult
+              - codepipeline:PutJobFailureResult
+              - cloudformation:DescribeChangeSet
+              - cloudformation:DescribeStackResources
+              - cloudformation:DescribeStacks
+              - cloudformation:GetTemplate
+              - cloudformation:ListStackResources
+              - cloudwatch:*
+              - cognito-identity:ListIdentityPools
+              - cognito-sync:GetCognitoEvents
+              - cognito-sync:SetCognitoEvents
+              - dynamodb:*
+              - ec2:DescribeSecurityGroups
+              - ec2:DescribeSubnets
+              - ec2:DescribeVpcs
+              - events:*
+              - iam:GetPolicy
+              - iam:GetPolicyVersion
+              - iam:GetRole
+              - iam:GetRolePolicy
+              - iam:ListAttachedRolePolicies
+              - iam:ListRolePolicies
+              - iam:ListRoles
+              - iam:PassRole
+              - kms:ListAliases
+              - lambda:*
+              - logs:*
+              - s3:*
+              - sns:ListSubscriptions
+              - sns:ListSubscriptionsByTopic
+              - sns:ListTopics
+              - sns:Publish
+              - sns:Subscribe
+              - sns:Unsubscribe
+              - sqs:ListQueues
+              - sqs:SendMessage
+            Resource: '*'
+  CodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codedeploy.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: CodeDeployPolicy
+      RoleName: codedeploy-lambda-rolee
+
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ComputePlatform: Lambda
+
+  MyDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    DependsOn: CodeDeployApplication
+    Properties:
+      ApplicationName:
+        Ref CodeDeployApplication
+      DeploymentGroupName: deploymentGroup
+      DeploymentConfigName: CodeDeployDefault.LambdaAllAtOnce
+      DeploymentStyle:
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+        DeploymentType: BLUE_GREEN
+#      Deployment:
+#        Description: "First deploy using CodeDeploy"
+#        IgnoreApplicationStopFailures: True
+#        Revision:
+#          RevisionType: S3
+#          S3Location:
+#            Bucket: pr00sty-lambda
+#            BundleType: zip
+#            Key: lambda.zip
+      ServiceRoleArn:
+        GetAtt CodeDeployRole.Arn
