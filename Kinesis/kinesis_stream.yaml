@@ -1,0 +1,51 @@
+Resources:
+  KinesisDataStreamsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: ManagedPolicy for Kinesis Data Streams
+      ManagedPolicyName: kinesis-data-streams-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - kinesis:DescribeStream
+              - kinesis:PutRecord
+              - kinesis:PutRecords
+              - kinesis:GetShardIterator
+              - kinesis:GetRecords
+              - kinesis:ListShards
+              - kinesis:DescribeStreamSummary
+              - kinesis:RegisterStreamConsumer
+            Resource:
+              !Join
+              - ':'
+              - - arn:aws:kinesis
+                - !Ref AWS::Region
+                - !Ref AWS::AccountId
+                - stream/*
+          - Effect: Allow
+            Action:
+              - kinesis:SubscribeToShard
+              - kinesis:DescribeStreamConsumer
+            Resource:
+              !Join
+              - ':'
+              - - arn:aws:kinesis
+                - !Ref AWS::Region
+                - !Ref AWS::AccountId
+                - stream/*
+          - Effect: Allow
+            Action:
+              - dynamodb:*
+            Resource:
+              !Join
+              - ':'
+              - - arn:aws:dynamodb
+                - !Ref AWS::Region
+                - !Ref AWS::AccountId
+                - table/*
+          - Effect: Allow
+            Action:
+              - cloudwatch:PutMetricData
+            Resource: "*"
