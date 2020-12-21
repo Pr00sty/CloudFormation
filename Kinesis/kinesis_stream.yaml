@@ -49,3 +49,30 @@ Resources:
             Action:
               - cloudwatch:PutMetricData
             Resource: "*"
+
+  KinesisDataStreamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: kinesis.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: KinesisDataStreamsPolicy
+      RoleName: kinesis-data-stream-role
+
+  MyStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: MyKinesisStream
+      RetentionPeriodHours: 24
+      ShardCount: 1
+
+  StreamConsumer:
+   Type: AWS::Kinesis::StreamConsumer
+   Properties:
+     StreamARN: !GetAtt MyStream.Arn
+     ConsumerName: TestConsumerName
