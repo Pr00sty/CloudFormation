@@ -1,0 +1,75 @@
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  MyLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: my-lambda-function
+      Handler: lambda_function.lambda_handler
+      Role:
+        !GetAtt LambdaExecutionRole.Arn
+      Code: lambda_code
+      Runtime: python3.7
+      MemorySize: 128
+      Timeout: 10
+
+  StatesExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - !Sub states.${AWS::Region}.amazonaws.com
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: StatesExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource: !Join
+                  - ':'
+                  - - 'arn:aws:lambda'
+                    - !Ref AWS::Region
+                    - !Ref AWS::AccountId
+                    - 'function'
+                    - !Ref MyLambdaFunction
+
+  MyStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      DefinitionString:
+        !Sub
+        - |-
+          {
+            "Comment": "A Hello World example using an AWS Lambda function",
+            "StartAt": "HelloWorld",
+            "States": {
+              "HelloWorld": {
+                "Type": "Task",
+                "Resource": "${lambdaArn}",
+                "End": true
+              }
+            }
+          }
+        - {lambdaArn: !GetAtt [ MyLambdaFunction, Arn ]}
+      RoleArn:
+        !GetAtt StatesExecutionRole.Arn
