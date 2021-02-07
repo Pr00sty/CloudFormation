@@ -1,0 +1,21 @@
+Reseources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: paw-99-datalake
+
+  LakeFormationLocation:
+    DependsOn: S3Bucket
+    Type: AWS::LakeFormation::Resource
+    Properties:
+      ResourceArn:
+        Fn::GetAtt:
+          - S3Bucket
+          - Arn
+      RoleArn:
+        Fn::Join:
+          - ':'
+          - - "arn:aws:iam:"
+            - Ref AWS::AccountId
+            - role/aws-service-role/lakeformation.amazonaws.com/AWSServiceRoleForLakeFormationDataAccess
+      UseServiceLinkedRole: true
