@@ -1,8 +1,28 @@
-Reseources:
+Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: paw-99-datalake
+  SampleBucketPolicy:
+    DependsOn: S3Bucket
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Id: MyPolicy
+        Version: 2012-10-17
+        Statement:
+          -
+            Sid: ReadWrite
+            Action: "*"
+            Effect: Allow
+            Resource:
+              Fn::Join:
+                - ""
+                - - "arn:aws:s3:::"
+                  - Ref: "S3Bucket"
+                  - "/*"
+            Principal: "*"
 
   LakeFormationLocation:
     DependsOn: S3Bucket
@@ -16,6 +36,6 @@ Reseources:
         Fn::Join:
           - ':'
           - - "arn:aws:iam:"
-            - Ref AWS::AccountId
+            - !Ref AWS::AccountId
             - role/aws-service-role/lakeformation.amazonaws.com/AWSServiceRoleForLakeFormationDataAccess
       UseServiceLinkedRole: true
