@@ -1,0 +1,27 @@
+Resources:
+  DatalakeUserBasicPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for DataLake
+    Properties:
+      ManagedPolicyName: DatalakeUserBasicPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - lakeformation:GetDataAccess
+              - glue:GetTable
+              - glue:GetTables
+              - glue:SearchTables
+              - glue:GetDatabase
+              - glue:GetDatabases
+              - glue:GetPartitions
+            Resource: '*'
+
+  Group:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: LakeFormationUsers
+      ManagedPolicyArns:
+        - Ref: DatalakeUserBasicPolicy
+        - arn:aws:iam::aws:policy/AmazonAthenaFullAccess
