@@ -32,3 +32,6 @@ Outputs:
   FlaskAppRepositoryName:
     Value:
       Ref: FlaskAppRepository
+    Export:
+      Name:
+        Fn::Sub: "${AWS::StackName}-FlaskAppRepositoryName"
