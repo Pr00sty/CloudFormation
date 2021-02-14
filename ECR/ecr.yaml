@@ -2,7 +2,7 @@ Resources:
   FlaskAppRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: "flask_appp"
+      RepositoryName: "flask_app"
       ImageScanningConfiguration:
         scanOnPush: true
       RepositoryPolicyText:
@@ -29,3 +29,6 @@ Outputs:
   FlaskAppRepositoryArn:
     Value:
       Fn::GetAtt: FlaskAppRepository.Arn
+  FlaskAppRepositoryName:
+    Value:
+      Ref: FlaskAppRepository
