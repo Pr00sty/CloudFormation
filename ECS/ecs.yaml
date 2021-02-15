@@ -1,0 +1,53 @@
+Resources:
+  ECSCluster:
+    Type: 'AWS::ECS::Cluster'
+    Properties:
+      ClusterName: PawFargateCluster
+      CapacityProviders:
+        - FARGATE
+      DefaultCapacityProviderStrategy:
+        - CapacityProvider: FARGATE
+          Weight: 1
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Cpu: 256
+      Memory: 512
+      NetworkMode: awsvpc
+      Family: flask_app_task_def
+      ExecutionRoleArn:
+        Fn::Join:
+          - ':'
+          - - "arn:aws:iam:"
+            - Ref: AWS::AccountId
+            - role/ecsTaskExecutionRole
+      RequiresCompatibilities:
+        - "FARGATE"
+      ContainerDefinitions:
+        -
+          Name: "flask-app-container"
+          Image:
+            Fn::Join:
+              - ''
+              - - Ref: AWS::AccountId
+                - ".dkr.ecr."
+                - Ref: AWS::Region
+                - ".amazonaws.com/"
+                - Fn::ImportValue:
+                    Fn::Sub: ecr-repos-FlaskAppRepositoryName
+                - ":latest"
+          Cpu: 256
+          Memory: 512
+          MemoryReservation: 128
+          PortMappings:
+            - ContainerPort: 9999
+              HostPort: 9999
+              Protocol: tcp
+          HealthCheck:
+            Interval: 5
+            Retries: 2
+            StartPeriod: 1
+            Timeout: 3
+            Command:
+              - curl localhost:9999
