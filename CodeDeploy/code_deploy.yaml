@@ -75,7 +75,7 @@ Resources:
     DependsOn: CodeDeployApplication
     Properties:
       ApplicationName:
-        Ref CodeDeployApplication
+        Ref: CodeDeployApplication
       DeploymentGroupName: deploymentGroup
       DeploymentConfigName: CodeDeployDefault.LambdaAllAtOnce
       DeploymentStyle:
@@ -91,4 +91,6 @@ Resources:
 #            BundleType: zip
 #            Key: lambda.zip
       ServiceRoleArn:
-        GetAtt CodeDeployRole.Arn
+        Fn::GetAtt:
+          - CodeDeployRole
+          - Arn
