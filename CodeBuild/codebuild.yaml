@@ -1,0 +1,55 @@
+Parameters:
+  bucketName:
+    Type: String
+    Default: pawbucket/codebuild.zip
+
+Resources:
+  CodeBuildPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for CodeBuild
+    Properties:
+      ManagedPolicyName: codebuild-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - codebuild:*
+              - lambda:*
+              - logs:*
+              - s3:*
+            Resource: '*'
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: CodeBuildPolicy
+      RoleName: codebuild-role
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: myProject
+      ServiceRole:
+        Fn::GetAtt:
+          - CodeBuildRole
+          - Arn
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Location:
+          Ref: bucketName
+        Type: S3
+      TimeoutInMinutes: 10
