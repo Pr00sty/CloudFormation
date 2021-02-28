@@ -43,13 +43,11 @@ Resources:
           - CodeBuildRole
           - Arn
       Artifacts:
-        Type: no_artifacts
+        Type: CODEPIPELINE
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:5.0
       Source:
-        Location:
-          Ref: bucketName
-        Type: S3
+        Type: CODEPIPELINE
       TimeoutInMinutes: 10
