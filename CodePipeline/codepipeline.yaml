@@ -1,0 +1,84 @@
+Parameters:
+  SourceS3Bucket:
+    Type: String
+    Default: pawbucket
+  SourceS3ObjectKey:
+    Type: String
+    Default: codebuild.zip
+  ArtifactStoreS3Location:
+    Type: String
+    Default: pawbucket
+
+Resources:
+  CodePipelinePolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for CodePipeline
+    Properties:
+      ManagedPolicyName: codepipeline-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - codebuild:*
+              - codedeploy:*
+              - codepipeline:*
+              - logs:*
+              - s3:*
+            Resource: '*'
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: CodePipelinePolicy
+      RoleName: codepipeline-role
+  AppPipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn:
+        Fn::GetAtt:
+          - CodePipelineRole
+          - Arn
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: SourceAction
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                S3Bucket:
+                  Ref: SourceS3Bucket
+                S3ObjectKey:
+                  Ref: SourceS3ObjectKey
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: myProject
+      ArtifactStore:
+        Type: S3
+        Location:
+          Ref: ArtifactStoreS3Location
