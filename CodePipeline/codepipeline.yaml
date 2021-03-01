@@ -10,6 +10,84 @@ Parameters:
     Default: pawbucket
 
 Resources:
+  CodeBuildPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for CodeBuild
+    Properties:
+      ManagedPolicyName: codebuild-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - codebuild:*
+              - lambda:*
+              - logs:*
+              - s3:*
+            Resource: '*'
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: CodeBuildPolicy
+      RoleName: codebuild-role
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: myProject
+      ServiceRole:
+        Fn::GetAtt:
+          - CodeBuildRole
+          - Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:5.0
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 10
+
+  CloudFormationPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Description: Policy for CloudFormation
+    Properties:
+      ManagedPolicyName: cloudformation-policy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - codedeploy:*
+              - cloudformation:*
+              - iam:*
+              - lambda:*
+              - s3:*
+            Resource: '*'
+  CloudFormationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: "/"
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - Ref: CloudFormationPolicy
+      RoleName: cloudformation-role
+
   CodePipelinePolicy:
     Type: AWS::IAM::ManagedPolicy
     Description: Policy for CodePipeline
@@ -23,6 +101,8 @@ Resources:
               - codebuild:*
               - codedeploy:*
               - codepipeline:*
+              - cloudformation:*
+              - iam:*
               - logs:*
               - s3:*
             Resource: '*'
@@ -78,6 +158,29 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: myProject
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              InputArtifacts:
+                - Name: BuildOutput
+              OutputArtifacts: [ ]
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: stackname
+                ChangeSetName: pipeline-changeset
+                Capabilities: CAPABILITY_IAM
+                TemplatePath: "BuildOutput::lambda_package.yaml"
+                RoleArn:
+                  Fn::GetAtt:
+                    - CloudFormationRole
+                    - Arn
+              Region: eu-west-1
+              RunOrder: 1
       ArtifactStore:
         Type: S3
         Location:
