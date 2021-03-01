@@ -22,6 +22,7 @@ phases:
     commands:
       - echo Entered the post_build phase...
       - echo Build completed on `date`
+      - aws cloudformation package --template-file lambda.yaml --s3-bucket pawbucket --output-template-file lambda_package.yaml
 artifacts:
   files:
     - '**/*'
