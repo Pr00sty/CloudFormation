@@ -1,0 +1,10 @@
+Resources:
+  mylambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: mylambda
+      Runtime: python3.7
+      Handler: lambda_function.lambda_handler
+      Code: lambda/
+      Role: arn:aws:iam::511545215925:role/lambda_role
+      Description: Invoke a function during stack creation.
