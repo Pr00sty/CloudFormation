@@ -158,6 +158,38 @@ Resources:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: myProject
+        - Name: CreateChangeSet
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: 1
+              InputArtifacts:
+                - Name: BuildOutput
+              OutputArtifacts: [ ]
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                StackName: myApplicationStack
+                ChangeSetName: pipeline-changeset
+                Capabilities: CAPABILITY_IAM
+                TemplatePath: "BuildOutput::lambda_package.yaml"
+                RoleArn:
+                  Fn::GetAtt:
+                    - CloudFormationRole
+                    - Arn
+              Region: eu-west-1
+              RunOrder: 1
+        - Name: Approve
+          Actions:
+            - Name: Approve
+              ActionTypeId:
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: 1
+              RunOrder: 1
         - Name: Deploy
           Actions:
             - Name: Deploy
@@ -170,8 +202,8 @@ Resources:
                 - Name: BuildOutput
               OutputArtifacts: [ ]
               Configuration:
-                ActionMode: CREATE_UPDATE
-                StackName: stackname
+                ActionMode: CHANGE_SET_EXECUTE
+                StackName: myApplicationStack
                 ChangeSetName: pipeline-changeset
                 Capabilities: CAPABILITY_IAM
                 TemplatePath: "BuildOutput::lambda_package.yaml"
