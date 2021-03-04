@@ -1,0 +1,125 @@
+Resources:
+  POSTlambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: POSTlambda
+      Runtime: python3.7
+      Handler: lambda_function.lambda_handler
+      Code: code/
+      Role:
+        Fn::Join:
+          - ':'
+          - - "arn:aws:iam:"
+            - Ref: AWS::AccountId
+            - "role/lambda_role"
+
+  RestApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      StageName: mystage
+      DeploymentId:
+        Ref: Deployment
+      RestApiId:
+        Ref: RestApi
+
+  RestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: myRESTApi
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ResponseModel200:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId:
+        Ref: RestApi
+      ContentType: application/json
+      Name: ResponseModel200
+      Schema:
+        $schema: http://json-schema.org/draft-04/schema#
+        type: object
+        properties:
+          statusCode:
+            type: integer
+          body:
+            type: string
+        required:
+          - statusCode
+          - body
+
+  ResponseModel400:
+    Type: AWS::ApiGateway::Model
+    Properties:
+      RestApiId:
+        Ref: RestApi
+      ContentType: application/json
+      Name: ResponseModel400
+      Schema:
+        $schema: http://json-schema.org/draft-04/schema#
+        type: object
+        properties:
+          statusCode:
+            type: integer
+          body:
+            type: string
+        required:
+          - statusCode
+          - body
+
+  POSTMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: POST
+      RestApiId:
+        Ref: RestApi
+      ResourceId:
+        Fn::GetAtt:
+        - RestApi
+        - RootResourceId
+      MethodResponses:
+        - StatusCode: 200
+          ResponseModels:
+            application/json:
+              Ref: ResponseModel200
+        - StatusCode: 400
+          ResponseModels:
+            application/json:
+              Ref: ResponseModel400
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        Uri:
+          Fn::Join:
+            - ''
+            - - "arn:aws:apigateway:"
+              - Ref: AWS::Region
+              - ':lambda:'
+              - path/2015-03-31/functions/
+              - Fn::GetAtt:
+                - POSTlambda
+                - Arn
+              - /invocations
+
+  lambdaApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    DependsOn:
+      - POSTlambda
+      - RestApi
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Fn::GetAtt:
+          - POSTlambda
+          - Arn
+      Principal: apigateway.amazonaws.com
+
+  Deployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: POSTMethod
+    Properties:
+      RestApiId:
+        Ref: RestApi
+      StageName: deploymentstage
