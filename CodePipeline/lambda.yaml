@@ -6,5 +6,10 @@ Resources:
       Runtime: python3.7
       Handler: lambda_function.lambda_handler
       Code: lambda/
-      Role: arn:aws:iam::511545215925:role/lambda_role
+      Role:
+        - Fn::Join:
+            - ':'
+            - - "arn:aws:iam:"
+              - Ref: AWS::AccountId
+              - "role/lambda_role"
       Description: Invoke a function during stack creation.
