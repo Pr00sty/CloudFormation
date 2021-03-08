@@ -4,13 +4,14 @@ import json
 def lambda_handler(event, context):
     if not event:
         return {
+            "isBase64Encoded": "false",
             "statusCode": 400,
-            "body": json.dumps({
-                    "Error": "Got empty body"
-                })
-            # "headers": {
-            #     'Content-Type': 'application/json'
-            # }
+            "errorType": "Error",
+            "errorMessage": "Error. Got empty body",
+            "headers": {
+                'Content-Type': 'application/json'
+            }
+
         }
     else:
         name = event.get("name")
