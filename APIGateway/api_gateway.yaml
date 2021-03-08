@@ -60,13 +60,32 @@ Resources:
         $schema: http://json-schema.org/draft-04/schema#
         type: object
         properties:
+          isBase64Encoded:
+            type: string
           statusCode:
             type: integer
-          body:
+          errorType:
             type: string
+          errorMessage:
+            type: object
+            properties:
+              Error:
+                type: string
+            required:
+              - Error
+          headers:
+            type: object
+            properties:
+              Content-Type:
+                type: string
+            required:
+              - Content-Type
         required:
+          - isBase64Encoded
           - statusCode
-          - body
+          - errorType
+          - errorMessage
+          - headers
 
   POSTMethod:
     Type: AWS::ApiGateway::Method
@@ -77,8 +96,8 @@ Resources:
         Ref: RestApi
       ResourceId:
         Fn::GetAtt:
-        - RestApi
-        - RootResourceId
+          - RestApi
+          - RootResourceId
       MethodResponses:
         - StatusCode: 200
           ResponseModels:
@@ -91,6 +110,13 @@ Resources:
       Integration:
         Type: AWS
         IntegrationHttpMethod: POST
+        IntegrationResponses:
+          - ContentHandling: CONVERT_TO_TEXT
+            StatusCode: 200
+          - ContentHandling: CONVERT_TO_TEXT
+            StatusCode: 400
+            SelectionPattern: '\{\"statusCode\"\: 400*.'
+        PassthroughBehavior: WHEN_NO_TEMPLATES
         Uri:
           Fn::Join:
             - ''
